@@ -1,184 +1,163 @@
-import { useState, useEffect } from 'react';
-import aspireLogo from '/Aspire.png';
-import './App.css';
+import { useState } from 'react'
+import './App.css'
 
-interface WeatherForecast {
-    date: string;
-    temperatureC: number;
-    temperatureF: number;
-    summary: string;
-}
+type Screen = 'home' | 'listings' | 'insights-loading' | 'insights' | 'searchByCity'
+
 
 function App() {
-    const [weatherData, setWeatherData] = useState<WeatherForecast[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [useCelsius, setUseCelsius] = useState(false);
+    const [screen, setScreen] = useState<Screen>('home')
 
-    const fetchWeatherForecast = async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            const response = await fetch('/api/weatherforecast');
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data: WeatherForecast[] = await response.json();
-            setWeatherData(data);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to fetch weather data');
-            console.error('Error fetching weather forecast:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchWeatherForecast();
-    }, []);
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString(undefined, {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
+    function goHome() {
+        setScreen('home')
+    }
+   
 
     return (
-        <div className="app-container">
-            <header className="app-header">
-                <a
-                    href="https://aspire.dev"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Visit Aspire website (opens in new tab)"
-                    className="logo-link"
-                >
-                    <img src={aspireLogo} className="logo" alt="Aspire logo" />
-                </a>
-                <h1 className="app-title">Aspire Starter</h1>
-                <p className="app-subtitle">Modern distributed application development</p>
-            </header>
+        <main className="app-shell">
+            <section className="workspace" aria-labelledby="page-title">
+                <header className="page-header">
+                    <p className="eyebrow">InfoTrack / discovery</p>
+                    <h1 id="page-title">
+                        {screen === 'home'
+                            ? 'Solicitor Discovery'
+                            : screen === 'insights' || screen === 'insights-loading'
+                                ? 'Insights'
+                                : 'Location Crawler'}
+                    </h1>
+                    <p className="subtitle">
+                        {screen === 'home' ? (
+                            <>
+                                Start Search solicitor listing.
+                            </>
+                        ) : screen === 'insights' || screen === 'insights-loading' ? (
+                            <>
+                                Browse previously scraped solicitor listings. Sort by <strong>postcode</strong> or <strong>place name</strong> to surface nearby firms first.
+                            </>
+                        ) : screen === 'listings' ? (
+                            <>
+                                Browse solicitor cards extracted from the <strong>selected location</strong> page.
+                            </>
+                        ) : (
+                            <>
+                                Search persisted crawl results and open a location for <strong>card-based solicitor details</strong>.
+                            </>
+                        )}
+                    </p>
+                </header>
 
-            <main className="main-content">
-                <section className="weather-section" aria-labelledby="weather-heading">
-                    <div className="card">
-                        <div className="section-header">
-                            <h2 id="weather-heading" className="section-title">Weather Forecast</h2>
-                            <div className="header-actions">
-                                <fieldset className="toggle-switch" aria-label="Temperature unit selection">
-                                    <legend className="visually-hidden">Temperature unit</legend>
-                                    <button
-                                        className={`toggle-option ${!useCelsius ? 'active' : ''}`}
-                                        onClick={() => setUseCelsius(false)}
-                                        aria-pressed={!useCelsius}
-                                        type="button"
-                                    >
-                                        <span aria-hidden="true">°F</span>
-                                        <span className="visually-hidden">Fahrenheit</span>
+                {/* ── Home ── */}
+                {screen === 'home' && (
+                    <div className="home-screen">
+                        <div className="mode-cards">
+                            <button className="mode-card mode-card--search" type="button">
+                                <span className="mode-card-accent" />
+                                <span className="mode-card-title">Search By City</span>
+                                <span className="mode-card-desc">
+                                    Search solicitors by city.
+                                </span>
+                            </button>
+                            <button className="mode-card mode-card--insights" type="button">
+                                <span className="mode-card-accent" />
+                                <span className="mode-card-title">Insights</span>
+                                <span className="mode-card-desc">
+                                    View scraped solicitor listings only. Sort results by postcode or
+                                    place name to surface nearby firms first.
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {screen === 'searchByCity' && (
+                    <>
+                        <section className="crawl-controls" aria-label="Search by city">
+                            <form onSubmit={(event) => {
+                                event.preventDefault()                                
+                            }}>
+                                <label htmlFor="city-search">Search by city</label>
+                                <div className="input-row">
+                                    <input
+                                        id="city-search"
+                                        type="search"
+                                        
+                                        placeholder="Enter a city name"
+                                    />
+                                    <button className="primary-action" type="submit">
+                                        Search
                                     </button>
-                                    <button
-                                        className={`toggle-option ${useCelsius ? 'active' : ''}`}
-                                        onClick={() => setUseCelsius(true)}
-                                        aria-pressed={useCelsius}
-                                        type="button"
-                                    >
-                                        <span aria-hidden="true">°C</span>
-                                        <span className="visually-hidden">Celsius</span>
-                                    </button>
-                                </fieldset>
-                                <button
-                                    className="refresh-button"
-                                    onClick={fetchWeatherForecast}
-                                    disabled={loading}
-                                    aria-label={loading ? 'Loading weather forecast' : 'Refresh weather forecast'}
-                                    type="button"
-                                >
-                                    <svg
-                                        className={`refresh-icon ${loading ? 'spinning' : ''}`}
-                                        width="20"
-                                        height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        aria-hidden="true"
-                                        focusable="false"
-                                    >
-                                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                                    </svg>
-                                    <span>{loading ? 'Loading...' : 'Refresh'}</span>
+                                </div>
+                                <p className="input-hint">
+                                    This search uses the configured city URL template from appsettings.
+                                </p>
+                                
+                            </form>
+                            <div className="secondary-search-actions">
+                                <button className="quiet-action" type="button" onClick={() => goHome()}>
+                                    &larr; Home
                                 </button>
                             </div>
+                        </section>
+
+                        <section className="results-section" aria-labelledby="city-results-heading">
+                            <div className="section-heading">
+                                <h2 id="city-results-heading">City search results</h2>                               
+                            </div>                        
+
+                            
+                        </section>
+                    </>
+                )}
+
+                {screen === 'insights-loading' && (
+                    <section className="results-section" aria-live="polite">
+                        <div className="section-heading">
+                            <h2>Loading searched listings</h2>
+                            <span>Aggregating data...</span>
                         </div>
-
-                        {error && (
-                            <div className="error-message" role="alert" aria-live="polite">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="12" y1="8" x2="12" y2="12" />
-                                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                                </svg>
-                                <span>{error}</span>
+                        <div className="progress-wrap" aria-hidden="true">
+                            <div className="progress-track">
+                                <div className="progress-fill" style={{ width: `${insightsProgress}%` }} />
                             </div>
-                        )}
+                            <p>Fetching solicitor listings across locations...</p>
+                        </div>
+                    </section>
+                )}
 
-                        {loading && weatherData.length === 0 && (
-                            <div className="loading-skeleton" role="status" aria-live="polite" aria-label="Loading weather data">
-                                {[...Array(5)].map((_, i) => (
-                                    <div key={i} className="skeleton-row" aria-hidden="true" />
-                                ))}
-                                <span className="visually-hidden">Loading weather forecast data...</span>
+                {/* ── Insights: results with sort ── */}
+                {screen === 'insights' && (
+                    <>
+                        <section className="crawl-controls insights-controls" aria-label="Insights controls">
+                            <form className="insights-form">
+                                <label htmlFor="insight-sort">Search Nearest location</label>
+                                <div className="input-row">
+                                    <input
+                                        id="insight-sort"
+                                        type="search"                                        
+                                        placeholder="Enter postcode"
+                                        aria-describedby="postcode-hint"
+                                    />
+                                    <button className="primary-action" type="submit">
+                                        Lookup
+                                    </button>
+                                </div>
+                                
+                            </form>
+                            
+                            <div className="secondary-actions">
+                                <button className="quiet-action" type="button" onClick={() => goHome()}>
+                                    &larr; Home
+                                </button>
                             </div>
-                        )}
+                        </section>
 
-                        {weatherData.length > 0 && (
-                            <div className="weather-grid">
-                                {weatherData.map((forecast, index) => (
-                                    <article key={index} className="weather-card" aria-label={`Weather for ${formatDate(forecast.date)}`}>
-                                        <h3 className="weather-date">
-                                            <time dateTime={forecast.date}>{formatDate(forecast.date)}</time>
-                                        </h3>
-                                        <p className="weather-summary">{forecast.summary}</p>
-                                        <div className="weather-temps" aria-label={`Temperature: ${useCelsius ? forecast.temperatureC : forecast.temperatureF} degrees ${useCelsius ? 'Celsius' : 'Fahrenheit'}`}>
-                                            <div className="temp-group">
-                                                <span className="temp-value" aria-hidden="true">
-                                                    {useCelsius ? forecast.temperatureC : forecast.temperatureF}°
-                                                </span>
-                                                <span className="temp-unit" aria-hidden="true">{useCelsius ? 'Celsius' : 'Fahrenheit'}</span>
-                                            </div>
-                                        </div>
-                                    </article>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </section>
-            </main>
-
-            <footer className="app-footer">
-                <nav aria-label="Footer navigation">
-                    <a href="https://aspire.dev" target="_blank" rel="noopener noreferrer">
-                        Learn more about Aspire<span className="visually-hidden"> (opens in new tab)</span>
-                    </a>
-                    <a
-                        href="https://github.com/microsoft/aspire"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="github-link"
-                        aria-label="View Aspire on GitHub (opens in new tab)"
-                    >
-                        <img src="/github.svg" alt="" width="24" height="24" aria-hidden="true" />
-                        <span className="visually-hidden">GitHub</span>
-                    </a>
-                </nav>
-            </footer>
-        </div>
-    );
+                                                
+                    </>
+                )}                
+            </section>
+        </main>
+    )
 }
 
-export default App;
+
+
+export default App
