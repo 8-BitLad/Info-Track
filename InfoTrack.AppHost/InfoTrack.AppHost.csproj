@@ -1,0 +1,19 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.4.6">
+
+  <ItemGroup>
+    <ProjectReference Include="..\InfoTrack.Api\InfoTrack.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>9746a39b-856d-416d-bab6-cb143ca16cdf</UserSecretsId>
+  </PropertyGroup>
+
+</Project>
