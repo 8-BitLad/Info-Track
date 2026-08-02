@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\InfoTrack.Data\InfoTrack.Data.csproj" />
+    <ProjectReference Include="..\InfoTrack.Application\InfoTrack.Application.csproj" />
   </ItemGroup>
 
 </Project>
