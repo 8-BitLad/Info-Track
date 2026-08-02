@@ -42,13 +42,13 @@ function App() {
     // Additional UI filters
     const [selectedCounty, setSelectedCounty] = useState<string | null>(null)
     const [selectedCity, setSelectedCity] = useState<string | null>(null)
+    const [selectedRating, setSelectedRating] = useState<number | null>(null)
+    const [selectedReviewCount, setSelectedReviewCount] = useState<number | null>(null)
 
     // Insights state
     const [insightListings, setInsightListings] = useState<InsightListing[]>([])
-    const [insightSortTerm, setInsightSortTerm] = useState('')
     const [insightSearchTerm, setInsightSearchTerm] = useState('')
     const [insightsProgress, setInsightsProgress] = useState(8)
-
     const [citySearchTerm, setCitySearchTerm] = useState('')
     const [cityCards, setCityCards] = useState<SolicitorCard[]>([])
     const [citySource, setCitySource] = useState<string | null>(null)
@@ -80,7 +80,17 @@ function App() {
 
         if (selectedCity) {
             results = results.filter((listing) => listing.locationName === selectedCity)
-        }       
+        }
+
+        if (selectedRating) {
+            results = results.filter((listing) => listing.rating === selectedRating)
+        }
+
+
+        if (selectedReviewCount != null && selectedReviewCount === 0) // 0 review
+            results = results.filter((listing) => listing.reviewsCount <= selectedReviewCount)
+        else if (selectedReviewCount != null && selectedReviewCount > 0)
+            results = results.filter((listing) => listing.reviewsCount >= selectedReviewCount)
 
 
         if (searchValue) {
@@ -108,11 +118,11 @@ function App() {
         : Array.from(new Set(selectedCountiesAndCities.map(item => item.locationName))).sort();
 
 
-    async function startInsights() {
+    async function startInsights() {        
         setErrorMessage(null)
         setInsightsProgress(8)
         setScreen('insights-loading')
-        await loadInsightListings(insightSortTerm)
+        await loadInsightListings()
     }
 
     async function startSearchByCity() {
@@ -169,9 +179,10 @@ function App() {
     }
 
     function goHome() {
-        setInsightSortTerm("");
         setCitySearchTerm("");
         setInsightSearchTerm("");
+        setSelectedRating(0);
+        setSelectedReviewCount(-1);
         setSelectedCity(null);
         setSelectedCounty(null);
         setScreen('home')
@@ -343,7 +354,6 @@ function App() {
                     </>
                 )}
 
-                {/* ── Insights: loading ── */}
                 {screen === 'insights-loading' && (
                     <section className="results-section" aria-live="polite">
                         <div className="section-heading">
@@ -361,7 +371,7 @@ function App() {
 
                 {screen === 'insights' && (
                     <>
-                        <section className="crawl-controls insights-controls" aria-label="Insights controls">                           
+                        <section className="crawl-controls insights-controls" aria-label="Insights controls">                            
                             <form onSubmit={(event) => { event.preventDefault() }} className="insights-form">
                                 <label htmlFor="insight-search">Filter results</label>
                                 <div className="input-row">
@@ -403,7 +413,37 @@ function App() {
                                         {citiesForSelectedCounty.map((city) => (
                                             <option key={city} value={city}>{city}</option>
                                         ))}
-                                    </select>                                    
+                                    </select>
+                                    <label htmlFor="rating-select">Rating</label>
+                                    <select
+                                        id="rating-select"
+                                        onChange={(e) => setSelectedRating(e.target.value ? parseInt(e.target.value) : null)}>
+                                        <option value="">All Ratings</option>
+                                        {Array.from({ length: 5 }, (_, i) => {
+                                            const stars = '*'.repeat(i + 1);
+                                            return (
+                                                <option key={i} value={i + 1}>
+                                                    {stars}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                    <label htmlFor="review-select">Reviews</label>
+                                    <select
+                                        id="review-select"
+                                        onChange={(e) => setSelectedReviewCount(e.target.value ? parseInt(e.target.value) : null)}>
+                                        <option value="-1">All Reviews</option>
+                                        <option value="0">No Reviews</option>
+                                        {Array.from({ length: 4 }, (_, i) => {
+                                            const values = [1, 100, 500, 1000];
+                                            const review = values[i];
+                                            return (
+                                                <option key={i} value={review}>
+                                                    More Than {review}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
                                 </div>
 
                                 <div className="input-row">
