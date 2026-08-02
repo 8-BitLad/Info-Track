@@ -68,7 +68,7 @@ public static class HtmlParser
             var (tagName, attrs) = ParseTag(tagContent);
 
             // NEW: skip entirely, don't add to tree at all
-            if (VoidElements.Contains(tagName) || ScriptOrStyle.Contains(tagName))
+            if (VoidElements.Contains(tagName))
             {
                 i = tagEnd + 1;
                 continue;

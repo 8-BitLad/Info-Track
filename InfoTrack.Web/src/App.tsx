@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 
-type Screen = 'home' | 'startCrawl' | 'locations' | 'listings' | 'insights-loading' | 'insights' | 'searchByCity'
+type Screen = 'home' | 'insights-loading' | 'insights' | 'searchByCity'
 
 interface SolicitorCard {
     name: string
@@ -20,10 +20,34 @@ interface SolicitorListingsResponse {
     listings: SolicitorCard[]
 }
 
+interface InsightListing {
+    solicitorName: string
+    phoneNumber: string | null
+    email: string | null
+    websiteUrl: string | null
+    rating: number
+    sourceUrl: string
+    locationName: string
+    locationCounty: string | null
+    locationUrl: string
+    address: string | null
+    reviewsCount: number
+}
+
 function App() {
     const [screen, setScreen] = useState<Screen>('home')
 
     // Search Results state
+
+    // Additional UI filters
+    const [selectedCounty, setSelectedCounty] = useState<string | null>(null)
+    const [selectedCity, setSelectedCity] = useState<string | null>(null)
+
+    // Insights state
+    const [insightListings, setInsightListings] = useState<InsightListing[]>([])
+    const [insightSortTerm, setInsightSortTerm] = useState('')
+    const [insightSearchTerm, setInsightSearchTerm] = useState('')
+    const [insightsProgress, setInsightsProgress] = useState(8)
 
     const [citySearchTerm, setCitySearchTerm] = useState('')
     const [cityCards, setCityCards] = useState<SolicitorCard[]>([])
@@ -34,6 +58,63 @@ function App() {
 
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+    // Insights loading progress simulation
+    useEffect(() => {
+        if (screen !== 'insights-loading') return
+        const timer = window.setInterval(() => {
+            setInsightsProgress((current) => Math.min(current + 3, 92))
+        }, 130)
+        return () => { window.clearInterval(timer) }
+    }, [screen])
+
+
+    const sortedAndFilteredInsights = (() => {
+        const searchValue = insightSearchTerm.trim().toLowerCase()
+
+        let results = insightListings
+
+        // Apply county/city filters if selected
+        if (selectedCounty) {
+            results = results.filter((listing) => (listing.locationCounty ?? 'Unassigned') === selectedCounty)
+        }
+
+        if (selectedCity) {
+            results = results.filter((listing) => listing.locationName === selectedCity)
+        }       
+
+
+        if (searchValue) {
+            results = results.filter((listing) =>
+                listing.solicitorName.toLowerCase().includes(searchValue) ||
+                (listing.phoneNumber ?? '').toLowerCase().includes(searchValue) ||
+                (listing.email ?? '').toLowerCase().includes(searchValue) ||
+                listing.locationName.toLowerCase().includes(searchValue) ||
+                (listing.locationCounty ?? '').toLowerCase().includes(searchValue)
+            )
+        }
+
+        return results
+    })()
+
+    const selectedCountiesAndCities = [...new Map(insightListings.map(item => [`${item.locationCounty}-${item.locationName}`,
+    { locationCounty: item.locationCounty, locationName: item.locationName }])).values()];
+
+    // 1. Get a sorted, unique list of counties from selected list
+    const counties = Array.from(new Set(selectedCountiesAndCities.map(item => item.locationCounty))).sort();
+
+    // 2. Get cities filtered by the selected county (or all cities if no county is selected)
+    const citiesForSelectedCounty = selectedCounty
+        ? Array.from(new Set(selectedCountiesAndCities.filter(item => item.locationCounty === selectedCounty).map(item => item.locationName))).sort()
+        : Array.from(new Set(selectedCountiesAndCities.map(item => item.locationName))).sort();
+
+
+    async function startInsights() {
+        setErrorMessage(null)
+        setInsightsProgress(8)
+        setScreen('insights-loading')
+        await loadInsightListings(insightSortTerm)
+    }
+
     async function startSearchByCity() {
         setErrorMessage(null)
         setCityFormError(null)
@@ -42,6 +123,24 @@ function App() {
         setCitySource(null)
         setCityCardsProgress(10)
         setScreen('searchByCity')
+    }
+
+    async function loadInsightListings(postCode?: string) {
+        const url = new URL('/api/insights/listings', window.location.origin)
+        if (postCode) {
+            url.searchParams.append('postCode', postCode)
+        }
+        const response = await fetch(url.toString())
+        if (!response.ok) {
+            setErrorMessage('Unable to load insight listings.')
+            setInsightsProgress(100)
+            setScreen('insights')
+            return
+        }
+        const listings = (await response.json()) as InsightListing[]
+        setInsightListings(listings)
+        setInsightsProgress(100)
+        setScreen('insights')
     }
 
     async function loadCityListings(city: string) {
@@ -70,7 +169,11 @@ function App() {
     }
 
     function goHome() {
+        setInsightSortTerm("");
         setCitySearchTerm("");
+        setInsightSearchTerm("");
+        setSelectedCity(null);
+        setSelectedCounty(null);
         setScreen('home')
     }
 
@@ -89,15 +192,15 @@ function App() {
                     <p className="subtitle">
                         {screen === 'home' ? (
                             <>
-                                Start Search solicitor listing.
+                                Search for Solicitors
                             </>
                         ) : screen === 'insights' || screen === 'insights-loading' ? (
                             <>
                                 Browse previously scraped solicitor listings. Sort by <strong>postcode</strong> or <strong>place name</strong> to surface nearby firms first.
                             </>
-                        ) : screen === 'listings' ? (
+                        ) : screen === 'searchByCity' ? (
                             <>
-                                Browse solicitor cards extracted from the <strong>selected location</strong> page.
+                                Search for solicitors in a specific city.
                             </>
                         ) : (
                             <>
@@ -117,7 +220,15 @@ function App() {
                                 <span className="mode-card-desc">
                                     Search solicitors by city.
                                 </span>
-                            </button>                            
+                            </button>
+                            <button className="mode-card mode-card--insights" type="button" onClick={() => void startInsights()}>
+                                <span className="mode-card-accent" />
+                                <span className="mode-card-title">Insights</span>
+                                <span className="mode-card-desc">
+                                    View solicitor listings. Sort results by postcode or
+                                    place name to surface nearby results.
+                                </span>
+                            </button>
                         </div>
                     </div>
                 )}
@@ -165,7 +276,7 @@ function App() {
 
                         <section className="results-section" aria-labelledby="city-results-heading">
                             <div className="section-heading">
-                                <h2 id="city-results-heading">City search results</h2>
+                                <h2 id="city-results-heading">Results</h2>
                                 <span>{cityCards.length} cards</span>
                             </div>
                             {isLoadingCityCards && (
@@ -231,7 +342,140 @@ function App() {
                         </section>
                     </>
                 )}
-                
+
+                {/* ── Insights: loading ── */}
+                {screen === 'insights-loading' && (
+                    <section className="results-section" aria-live="polite">
+                        <div className="section-heading">
+                            <h2>Loading searched listings</h2>
+                            <span>Aggregating data...</span>
+                        </div>
+                        <div className="progress-wrap" aria-hidden="true">
+                            <div className="progress-track">
+                                <div className="progress-fill" style={{ width: `${insightsProgress}%` }} />
+                            </div>
+                            <p>Fetching solicitor listings across locations...</p>
+                        </div>
+                    </section>
+                )}
+
+                {screen === 'insights' && (
+                    <>
+                        <section className="crawl-controls insights-controls" aria-label="Insights controls">                           
+                            <form onSubmit={(event) => { event.preventDefault() }} className="insights-form">
+                                <label htmlFor="insight-search">Filter results</label>
+                                <div className="input-row">
+                                    <input
+                                        id="insight-search"
+                                        type="search"
+                                        value={insightSearchTerm}
+                                        onChange={(event) => setInsightSearchTerm(event.target.value)}
+                                        placeholder="Search by name, phone, email or location"
+                                    />
+                                </div>
+                            </form>
+                            <div className="secondary-actions">
+                                <button className="quiet-action" type="button" onClick={() => goHome()}>
+                                    &larr; Home
+                                </button>
+                            </div>
+                        </section>
+
+                        <section className="crawl-controls insights-controls" aria-label="Insights controls">
+                            <div className="filter-row">
+                                <div className="input-row">
+                                    <label htmlFor="county-select">County</label>
+                                    <select
+                                        id="county-select"
+                                        value={selectedCounty ?? ''}
+                                        onChange={(e) => { setSelectedCounty(e.target.value || null); setSelectedCity(null); }}>
+                                        <option value="">All counties</option>
+                                        {counties.map((c) => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                    <label htmlFor="city-select">City / Location</label>
+                                    <select
+                                        id="city-select"
+                                        value={selectedCity ?? ''}
+                                        onChange={(e) => setSelectedCity(e.target.value || null)}>
+                                        <option value="">All locations</option>
+                                        {citiesForSelectedCounty.map((city) => (
+                                            <option key={city} value={city}>{city}</option>
+                                        ))}
+                                    </select>                                    
+                                </div>
+
+                                <div className="input-row">
+
+                                </div>
+                            </div>
+                        </section>
+                        <section className="results-section" aria-labelledby="insights-heading">
+                            <div className="section-heading">
+                                <h2 id="insights-heading">Previously scraped solicitor listings</h2>
+                                <span>{sortedAndFilteredInsights.length} results</span>
+                            </div>
+                            {insightListings.length === 0 ? (
+                                <p className="cards-empty">
+                                    No data available yet. Use Search Results to browse and scrape some locations first. This page displays solicitor listings only from locations you have previously clicked and browsed.
+                                </p>
+                            ) : sortedAndFilteredInsights.length === 0 ? (
+                                <p className="cards-empty">No listings matched your search.</p>
+                            ) : (
+                                <div className="card-grid">
+                                    {sortedAndFilteredInsights.map((listing, index) => (
+                                        <article className="solicitor-card" key={`${listing.solicitorName}-${listing.locationUrl}-${index}`}>
+                                            <header>
+                                                <h3>{listing.solicitorName}</h3>
+                                                <p>{formatRating(listing.rating)} ({listing.reviewsCount})</p>
+                                            </header>
+                                            <p className="insight-location-tag">
+                                                {listing.locationName}
+                                                {listing.locationCounty ? `, ${listing.locationCounty}` : ''}
+                                            </p>
+                                            <dl>
+                                                <div>
+                                                    <dt>Phone</dt>
+                                                    <dd>
+                                                        {listing.phoneNumber ? (
+                                                            <a href={`tel:${listing.phoneNumber}`}>{listing.phoneNumber}</a>
+                                                        ) : 'Not listed'}
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Email</dt>
+                                                    <dd>
+                                                        {listing.email ? (
+                                                            <a href={`mailto:${listing.email}`}>{listing.email}</a>
+                                                        ) : 'Not listed'}
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt>Website</dt>
+                                                    <dd>
+                                                        {listing.websiteUrl ? (
+                                                            <a href={listing.websiteUrl} target="_blank" rel="noreferrer">
+                                                                {listing.websiteUrl}
+                                                            </a>
+                                                        ) : 'Not listed'}
+                                                    </dd>
+                                                </div>
+                                                {listing.address && (
+                                                    <div>
+                                                        <dt>Address</dt>
+                                                        <dd>{listing.address}</dd>
+                                                    </div>
+                                                )}
+                                            </dl>
+                                        </article>
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                    </>
+                )}
+
                 {errorMessage && <p className="error-message" role="alert">{errorMessage}</p>}
             </section>
         </main>
@@ -247,7 +491,7 @@ function formatRating(rating: number) {
         return 'No rating'
     }
 
-    return `${'★'.repeat(rating)}`
+    return `${'*'.repeat(rating)}`
 }
 
 export default App

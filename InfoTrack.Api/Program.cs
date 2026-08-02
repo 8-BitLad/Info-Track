@@ -15,21 +15,6 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/locations/solicitors", async (
-    string url,
-    bool refresh,
-    IScrapOrchestrator orchestrator,
-    CancellationToken cancellationToken) =>
-{
-    if (string.IsNullOrWhiteSpace(url))
-    {
-        return Results.BadRequest(new { message = "A location URL is required." });
-    }
-
-    var listings = await orchestrator.GetSolicitorListingsAsync(url, refresh, cancellationToken);
-    return Results.Ok(listings);
-});
-
 app.MapGet("/api/locations/city", async (
     string city,
     bool refresh,
@@ -41,6 +26,15 @@ app.MapGet("/api/locations/city", async (
 
     var listings = await orchestrator.GetSolicitorListingsByCityAsync(city, refresh, cancellationToken);
     return Results.Ok(listings);
+});
+
+app.MapGet("/api/insights/listings", async (
+    ILocationQueryService service,
+    string? postCode,
+    CancellationToken cancellationToken) =>
+{
+    var response = await service.GetInsightListingsAsync(cancellationToken, postCode: postCode ?? "");
+    return Results.Ok(response);
 });
 
 
