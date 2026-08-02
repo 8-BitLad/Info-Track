@@ -3,6 +3,23 @@ import './App.css'
 
 type Screen = 'home' | 'insights-loading' | 'insights' | 'searchByCity'
 
+
+function isValidPostcode(postCode: string): boolean {
+    if (!postCode || typeof postCode !== 'string') return false
+
+    const trimmed = postCode.trim()
+
+    // Must contain a space (UK format: inward + outward code)
+    if (!trimmed.includes(' ')) return false
+
+    // Remove spaces and check minimum length (6 chars minimum for UK postcode)
+    const cleanedLength = trimmed.replace(/\s/g, '').length
+    if (cleanedLength < 6) return false
+
+    return true
+}
+
+
 interface SolicitorCard {
     name: string
     phoneNumber: string | null
@@ -47,8 +64,11 @@ function App() {
 
     // Insights state
     const [insightListings, setInsightListings] = useState<InsightListing[]>([])
+    const [insightSortTerm, setInsightSortTerm] = useState('')
     const [insightSearchTerm, setInsightSearchTerm] = useState('')
     const [insightsProgress, setInsightsProgress] = useState(8)
+    const [insightFormError, setInsightFormError] = useState<string | null>(null)
+
     const [citySearchTerm, setCitySearchTerm] = useState('')
     const [cityCards, setCityCards] = useState<SolicitorCard[]>([])
     const [citySource, setCitySource] = useState<string | null>(null)
@@ -118,11 +138,20 @@ function App() {
         : Array.from(new Set(selectedCountiesAndCities.map(item => item.locationName))).sort();
 
 
-    async function startInsights() {        
+    async function startInsights() {
+        // Validate postcode if provided
+        if (insightSortTerm.trim()) {
+            if (!isValidPostcode(insightSortTerm)) {
+                setInsightFormError('Please enter a complete postcode (e.g., "SW1A 1AA") or leave empty to load all listings.')
+                return
+            }
+        }
+
+        setInsightFormError(null)
         setErrorMessage(null)
         setInsightsProgress(8)
         setScreen('insights-loading')
-        await loadInsightListings()
+        await loadInsightListings(insightSortTerm)
     }
 
     async function startSearchByCity() {
@@ -179,6 +208,7 @@ function App() {
     }
 
     function goHome() {
+        setInsightSortTerm("");
         setCitySearchTerm("");
         setInsightSearchTerm("");
         setSelectedRating(0);
@@ -371,7 +401,33 @@ function App() {
 
                 {screen === 'insights' && (
                     <>
-                        <section className="crawl-controls insights-controls" aria-label="Insights controls">                            
+                        <section className="crawl-controls insights-controls" aria-label="Insights controls">
+                            <form onSubmit={(event) => { event.preventDefault(); void startInsights() }} className="insights-form">
+                                <label htmlFor="insight-sort">Search Nearest location</label>
+                                <div className="input-row">
+                                    <input
+                                        id="insight-sort"
+                                        type="search"
+                                        value={insightSortTerm}
+                                        onChange={(event) => {
+                                            setInsightSortTerm(event.target.value)
+                                            setInsightFormError(null)
+                                        }}
+                                        placeholder="Enter postcode"
+                                        aria-describedby="postcode-hint"
+                                    />
+                                    <button className="primary-action" type="submit">
+                                        Lookup
+                                    </button>
+                                </div>
+                                <p id="postcode-hint" className="input-hint">
+                                    Enter a complete postcode (e.g., SW1A 1AA) or leave empty to load all listings. Results will be ordered by <strong>closest solicitors by distance</strong>
+                                </p>
+                                {insightFormError && <p className="error-message" role="alert">{insightFormError}</p>}
+                            </form>
+
+
+
                             <form onSubmit={(event) => { event.preventDefault() }} className="insights-form">
                                 <label htmlFor="insight-search">Filter results</label>
                                 <div className="input-row">

@@ -11,7 +11,7 @@ namespace InfoTrack.Application.Queries
         Task<IReadOnlyList<InsightListing>> GetInsightListingsAsync(CancellationToken cancellationToken = default, string postCode = "");
     }
 
-    public sealed class LocationQueryService(IDBRepository repository, IListingGeoEnrichmentService geoEnrichmentService) : ILocationQueryService
+    public sealed class LocationQueryService(IDBRepository repository, IListingFilterByPostCodeService listingFilterByPostCodeService) : ILocationQueryService
     {
         public async Task<SolicitorListingsResponse> GetSolicitorListingsAsync(string locationUrl, bool refresh = false, CancellationToken cancellationToken = default)
             => new SolicitorListingsResponse(locationUrl, "database", await repository.GetLatestListingsByLocationUrlAsync(locationUrl, cancellationToken));
@@ -25,7 +25,7 @@ namespace InfoTrack.Application.Queries
             }
             else
             {
-                var listings = await geoEnrichmentService.EnrichAndSortAsync(insights, postCode, cancellationToken);
+                var listings = await listingFilterByPostCodeService.SortByPostCodeAsync(insights, postCode, cancellationToken);
                 return listings;
             }
         }
