@@ -3,8 +3,20 @@
 namespace InfoTrack.Scraper.Html;
 
 public static class HtmlParser
-{   
+{
+    private static readonly HashSet<string> VoidElements = new(StringComparer.OrdinalIgnoreCase)
+    {
+       "br", "img", "input", "link", "meta"
+    };
+
+    private static readonly HashSet<string> ScriptOrStyle = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "script", "style"
+    };
+
     //build dom tree from html for navigation and extraction
+    // Any <!-- comments --> and <!DOCTYPE> are skipped
+    // Any <script> and <style> inner content doesn't get added.
     public static HtmlNode Parse(string html)
     {
         var root = new HtmlNode { TagName = "#root" };
@@ -55,20 +67,29 @@ public static class HtmlParser
             var tagContent = html.Substring(i + 1, Math.Max(tagEnd - i - 1 - (selfClosing ? 1 : 0), 0));
             var (tagName, attrs) = ParseTag(tagContent);
 
+            // NEW: skip entirely, don't add to tree at all
+            if (VoidElements.Contains(tagName) || ScriptOrStyle.Contains(tagName))
+            {
+                i = tagEnd + 1;
+                continue;
+            }
+
             var node = new HtmlNode { TagName = tagName.ToLowerInvariant(), Parent = stack.Peek() };
             foreach (var (k, v) in attrs) node.Attributes[k] = v;
             stack.Peek().Children.Add(node);
             i = tagEnd + 1;
 
-            if (RawTextElements.Contains(node.TagName))
+            // Skip script/style entirely — don't add to tree, and skip past their body too
+            if (ScriptOrStyle.Contains(tagName))
             {
-                int closeIdx = html.IndexOf($"</{node.TagName}", i, StringComparison.OrdinalIgnoreCase);
-                int closeEnd = closeIdx == -1 ? -1 : html.IndexOf('>', closeIdx);
+                i = tagEnd + 1;
+                var closeIdx = html.IndexOf($"</{tagName}", i, StringComparison.OrdinalIgnoreCase);
+                var closeEnd = closeIdx == -1 ? -1 : html.IndexOf('>', closeIdx);
                 i = closeEnd == -1 ? len : closeEnd + 1;
                 continue;
             }
 
-            if (!selfClosing && !VoidElements.Contains(node.TagName))
+            if (!selfClosing)
                 stack.Push(node);
         }
 
@@ -90,79 +111,61 @@ public static class HtmlParser
         index + token.Length <= html.Length &&
         string.Compare(html, index, token, 0, token.Length, StringComparison.OrdinalIgnoreCase) == 0;
 
-    private static readonly HashSet<string> VoidElements = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"
-    };
-
-    private static readonly HashSet<string> RawTextElements = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "script", "style"
-    };
+    
 
     private static (string TagName, List<(string Key, string Value)> Attributes) ParseTag(string tagContent)
     {
-        tagContent = tagContent.Trim(); // remove whitespace
-        var spaceIndex = tagContent.IndexOfAny([' ', '\t', '\n', '\r']);
+        tagContent = tagContent.Trim();
+        var spaceIndex = tagContent.IndexOfAny([' ', '\t', '\n', '\r']); //till space is found, this is tag
         var tagName = spaceIndex == -1 ? tagContent : tagContent[..spaceIndex];
         var attributes = new List<(string, string)>();
+        if (spaceIndex == -1) return (tagName, attributes);
 
-        if (spaceIndex == -1)
+        var s = tagContent[(spaceIndex + 1)..]; // all possible attributes
+        int p = 0;
+        void SkipWs() { while (p < s.Length && char.IsWhiteSpace(s[p])) p++; }
+
+        while (p < s.Length)
         {
-            return (tagName, attributes);
-        }
+            SkipWs();
+            if (p >= s.Length) break;
 
-        var attrText = tagContent[(spaceIndex + 1)..];
-        var position = 0;
+            var nameStart = p;
+            while (p < s.Length && s[p] != '=' && !char.IsWhiteSpace(s[p])) p++; // i.e href = "abc.com"
+            var name = s[nameStart..p];
 
-        while (position < attrText.Length)
-        {
-            while (position < attrText.Length && char.IsWhiteSpace(attrText[position])) position++;
-            if (position >= attrText.Length) break;
+            if (string.IsNullOrWhiteSpace(name)) { p++; continue; }
 
-            var nameStart = position;
-            while (position < attrText.Length && attrText[position] != '=' && !char.IsWhiteSpace(attrText[position])) position++;
-            var name = attrText[nameStart..position];
+            SkipWs();
 
-            if (string.IsNullOrWhiteSpace(name))
+            if (p < s.Length && s[p] == '=')
             {
-                position++;
-                continue;
-            }
-
-            while (position < attrText.Length && char.IsWhiteSpace(attrText[position])) position++;
-
-            //crawl
-            if (position < attrText.Length && attrText[position] == '=')
-            {
-                position++;
-                while (position < attrText.Length && char.IsWhiteSpace(attrText[position])) position++;
-
+                p++;
+                SkipWs();
                 string value;
-                if (position < attrText.Length && (attrText[position] == '"' || attrText[position] == '\''))
+                if (p < s.Length && (s[p] == '"' || s[p] == '\''))
                 {
-                    var quote = attrText[position++];
-                    var valueStart = position;
-                    while (position < attrText.Length && attrText[position] != quote) position++;
-                    value = attrText[valueStart..Math.Min(position, attrText.Length)];
-                    position++;
+                    var quote = s[p++];
+                    var start = p;
+                    while (p < s.Length && s[p] != quote) p++;
+                    value = s[start..Math.Min(p, s.Length)];
+                    p++;
                 }
                 else
                 {
-                    var valueStart = position;
-                    while (position < attrText.Length && !char.IsWhiteSpace(attrText[position])) position++;
-                    value = attrText[valueStart..position];
+                    var start = p;
+                    while (p < s.Length && !char.IsWhiteSpace(s[p])) p++;
+                    value = s[start..p];
                 }
-
                 attributes.Add((name, WebUtility.HtmlDecode(value)));
             }
             else
             {
                 attributes.Add((name, string.Empty));
-                position++;
+                p++;
             }
         }
 
-        return (tagName, attributes); 
+        return (tagName, attributes);
     }
 }
