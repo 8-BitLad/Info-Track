@@ -2,26 +2,27 @@
 using InfoTrack.Domain;
 using InfoTrack.Scraper;
 
-namespace InfoTrack.Application.Commands
+public interface ICommandService
 {
-    public interface ICommandService
-    {
-        Task ScrapeAndPersistListingsAsync(string locationUrl, CancellationToken cancellationToken = default);
-    }
+    Task<IReadOnlyList<SolicitorCard>> ScrapeAndPersistListingsAsync(string locationUrl, CancellationToken cancellationToken = default);
+}
 
-    public sealed class CommandService(IDBRepository repository, 
-       ISolicitorListingScraper solicitorListingScraper) : ICommandService
+public sealed class CommandService(IDBRepository repository,
+   ISolicitorListingScraper solicitorListingScraper) : ICommandService
+{
+    public async Task<IReadOnlyList<SolicitorCard>> ScrapeAndPersistListingsAsync(string locationUrl, CancellationToken cancellationToken = default)
     {
-        public async Task ScrapeAndPersistListingsAsync(string locationUrl, CancellationToken cancellationToken = default)
+        try
         {
-            try
-            {
-               
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            var scrapedListings = await solicitorListingScraper.ScrapeAsync(locationUrl, cancellationToken);
+
+            await repository.SaveListingsAsync(locationUrl, scrapedListings, cancellationToken);
+
+            return scrapedListings;
+        }
+        catch (Exception)
+        {
+            throw;
         }
     }
 }

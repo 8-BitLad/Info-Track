@@ -1,5 +1,4 @@
-﻿using InfoTrack.Application.Commands;
-using InfoTrack.Application.Orchestrator;
+﻿using InfoTrack.Application.Orchestrator;
 using InfoTrack.Application.Queries;
 using InfoTrack.Application.Services;
 using InfoTrack.Domain.Contracts;
@@ -19,10 +18,8 @@ public static class ServiceCollectionExtensions
 			.AddOptions<BootstrapOptions>()
 			.Bind(configuration.GetSection("Bootstrap"));
 
-       
-
+        
         services.AddScoped<ICommandService, CommandService>();
-
         services.AddScoped<ILocationQueryService, LocationQueryService>();
         services.AddScoped<IScrapOrchestrator, ScrapOrchestrator>();
 

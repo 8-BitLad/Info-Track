@@ -388,56 +388,56 @@ tbody tr:not(:has(.empty-state)):hover {
     padding: 14px;
 }
 
-    .solicitor-card header {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
+/*.solicitor-card header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
 
-    .solicitor-card h3 {
-        margin: 0;
-        color: #f3f6fc;
-        font-family: "Segoe UI", "Noto Sans", sans-serif;
-        font-size: 1.12rem;
-    }
+.solicitor-card h3 {
+    margin: 0;
+    color: #f3f6fc;
+    font-family: "Segoe UI", "Noto Sans", sans-serif;
+    font-size: 1.12rem;
+}
 
-    .solicitor-card header p {
-        margin: 0;
-        color: #e0de70;
-        font-weight: 700;
-        font-size: 0.84rem;
-    }
+.solicitor-card header p {
+    margin: 0;
+    color: #e0de70;
+    font-weight: 700;
+    font-size: 0.84rem;
+}
 
-    .solicitor-card dl {
-        margin: 0;
+.solicitor-card dl {
+    margin: 0;
+    display: grid;
+    gap: 8px;
+}
+
+    .solicitor-card dl div {
         display: grid;
-        gap: 8px;
+        gap: 2px;
     }
 
-        .solicitor-card dl div {
-            display: grid;
-            gap: 2px;
-        }
+.solicitor-card dt {
+    font-size: 0.7rem;
+}
 
-    .solicitor-card dt {
-        font-size: 0.7rem;
-    }
+.solicitor-card dd {
+    margin: 0;
+    color: #e8edf7;
+    font-size: 0.93rem;
+    font-family: inherit;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
 
-    .solicitor-card dd {
-        margin: 0;
-        color: #e8edf7;
-        font-size: 0.93rem;
-        font-family: inherit;
-        font-weight: 500;
-        overflow-wrap: anywhere;
-    }
-
-    .solicitor-card a {
-        color: #69dfdd;
-        text-underline-offset: 3px;
-    }
+.solicitor-card a {
+    color: #69dfdd;
+    text-underline-offset: 3px;
+}*/
 
 @keyframes status-pulse {
     50% {
@@ -508,7 +508,6 @@ tbody tr:not(:has(.empty-state)):hover {
     }
 }
 
-/* ── Home screen ── */
 
 .home-screen {
     margin-top: 8px;
@@ -527,7 +526,6 @@ tbody tr:not(:has(.empty-state)):hover {
     gap: 14px;
     padding: 32px 28px;
     height: auto;
-    border: 1px solid #3b3f46;
     border-radius: 12px;
     background: #242628;
     box-shadow: 0 18px 42px #00000066;
@@ -536,16 +534,10 @@ tbody tr:not(:has(.empty-state)):hover {
     transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
-    .mode-card:hover {
-        border-color: #c27980;
-        background: #2a2e33;
-        box-shadow: 0 18px 52px #00000088, 0 0 0 1px #34d3cf30;
-    }
-
-    .mode-card:focus-visible {
-        outline: 3px solid #34d3cf;
-        outline-offset: 3px;
-    }
+.mode-card:focus-visible {
+    outline: 3px solid #34d3cf;
+    outline-offset: 3px;
+}
 
 .mode-card-accent {
     display: block;
@@ -563,11 +555,6 @@ tbody tr:not(:has(.empty-state)):hover {
     background: linear-gradient(90deg, #7b6cf6, #dce96b);
 }
 
-.mode-card--insights:hover {
-    border-color: #9d7ef8;
-    box-shadow: 0 18px 52px #00000088, 0 0 0 1px #9d7ef830;
-}
-
 .mode-card-title {
     display: block;
     color: #f4f6fb;
@@ -583,37 +570,4 @@ tbody tr:not(:has(.empty-state)):hover {
     font-size: 0.95rem;
     font-weight: 400;
     line-height: 1.55;
-}
-
-/* ── Insights controls ── */
-
-.insights-controls {
-    flex-wrap: wrap;
-    align-items: flex-start;
-}
-
-.insights-form {
-    flex: 1;
-    min-width: 200px;
-}
-
-.input-hint {
-    margin: 6px 0 0;
-    color: #6e7d93;
-    font-size: 0.78rem;
-    font-weight: 600;
-}
-
-/* ── Insight location tag on solicitor cards ── */
-
-.insight-location-tag {
-    margin: -4px 0 10px;
-    padding: 3px 8px;
-    display: inline-block;
-    border-radius: 4px;
-    background: #1e2d3a;
-    color: #5ec8e8;
-    font-size: 0.76rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
 }
