@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
+import { APIProvider, Map as GoogleMap, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
+
 import './App.css'
 
 type Screen = 'home' | 'insights-loading' | 'insights' | 'searchByCity'
 
+const API_KEY: string | null = "AIzaSyB9uTYOVU7SmS9G-_o26UKiNDRSUtuuJLw";
 
 function isValidPostcode(postCode: string): boolean {
     if (!postCode || typeof postCode !== 'string') return false
@@ -49,8 +52,31 @@ interface InsightListing {
     locationUrl: string
     address: string | null
     reviewsCount: number
+    longitude: number
+    latitude: number
 }
 
+interface MapViewProps {
+    lat: number
+    lng: number
+    location: string
+}
+function MapView({ lat, lng, location }: MapViewProps) {
+    return (
+        <APIProvider apiKey={API_KEY!}>
+            <div style={{ width: '100%', height: '500px' }}>
+                <GoogleMap
+                    defaultCenter={{lat, lng}}
+                    defaultZoom={15}
+                    mapId="DEMO_MAP_ID">
+                    <AdvancedMarker position={{ lat, lng }} title={location}>
+                        <Pin glyph={location} background="#f97316" borderColor="#c2410c" glyphColor="black" />
+                    </AdvancedMarker>
+                </GoogleMap>
+            </div>
+        </APIProvider>
+    )
+}
 function App() {
     const [screen, setScreen] = useState<Screen>('home')
 
@@ -75,8 +101,12 @@ function App() {
     const [isLoadingCityCards, setIsLoadingCityCards] = useState(false)
     const [cityCardsProgress, setCityCardsProgress] = useState(10)
     const [cityFormError, setCityFormError] = useState<string | null>(null)
-
+    const [showMap, setShowMap] = useState<boolean>(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [nearestLat, setNearestLat] = useState<number | null>(null)
+    const [nearestLng, setNearestLng] = useState<number | null>(null)
+    const [locationName, setLocationName] = useState<string | null>(null)
+
 
     // Insights loading progress simulation
     useEffect(() => {
@@ -179,6 +209,14 @@ function App() {
         const listings = (await response.json()) as InsightListing[]
         setInsightListings(listings)
         setInsightsProgress(100)
+
+        if (postCode !== "") {
+            setNearestLat(listings.length > 0 ? listings[0].latitude : null)
+            setNearestLng(listings.length > 0 ? listings[0].longitude : null)
+            setShowMap(true)
+            setLocationName(listings.length > 0 ? listings[0].solicitorName : null)
+        }
+        else { setShowMap(false) }
         setScreen('insights')
     }
 
@@ -217,6 +255,7 @@ function App() {
         setSelectedCounty(null);
         setScreen('home')
     }
+
 
     return (
         <main className="app-shell">
@@ -445,6 +484,7 @@ function App() {
                                     &larr; Home
                                 </button>
                             </div>
+                            
                         </section>
 
                         <section className="crawl-controls insights-controls" aria-label="Insights controls">
@@ -502,9 +542,12 @@ function App() {
                                     </select>
                                 </div>
 
-                                <div className="input-row">
-
-                                </div>
+                                
+                            </div>
+                        </section>
+                        <section>
+                            <div className="input-row">
+                                {showMap && <MapView lat={nearestLat} lng={nearestLng} location={locationName} />}
                             </div>
                         </section>
                         <section className="results-section" aria-labelledby="insights-heading">
