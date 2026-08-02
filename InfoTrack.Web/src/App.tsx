@@ -516,7 +516,7 @@ function App() {
                                         onChange={(e) => setSelectedRating(e.target.value ? parseInt(e.target.value) : null)}>
                                         <option value="">All Ratings</option>
                                         {Array.from({ length: 5 }, (_, i) => {
-                                            const stars = '*'.repeat(i + 1);
+                                            const stars = '★'.repeat(i + 1);
                                             return (
                                                 <option key={i} value={i + 1}>
                                                     {stars}
@@ -630,7 +630,7 @@ function formatRating(rating: number) {
         return 'No rating'
     }
 
-    return `${'*'.repeat(rating)}`
+    return `${'★'.repeat(rating)}`
 }
 
 export default App

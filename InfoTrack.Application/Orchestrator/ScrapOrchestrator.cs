@@ -49,7 +49,7 @@ namespace InfoTrack.Application.Orchestrator
             {
                 var scraped = await commandService.ScrapeAndPersistListingsAsync(locationUrl, cancellationToken);
                 logger.LogInformation("Listings scraped: {ListingCount}", scraped.Count);
-                return new SolicitorListingsResponse(locationUrl, "scraper", scraped);
+                return new SolicitorListingsResponse(locationUrl, "scraper", scraped.DistinctBy(l => l.Name).ToList());
             }
             catch (Exception ex)
             {

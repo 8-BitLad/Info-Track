@@ -46,6 +46,7 @@ public sealed class DBRepository : IDBRepository
         }
 
         return await _dbContext.SolicitorListings
+            .DistinctBy(l => l.Address)
             .Where(listing => listing.ScrapeRunId == latestRunId.Value)
             .OrderBy(listing => listing.Name)
             .Select(listing => new SolicitorCard(
@@ -56,7 +57,7 @@ public sealed class DBRepository : IDBRepository
                 listing.Rating,
                 listing.SourceUrl,
                 listing.Address,
-                listing.ReviewsCount))
+                listing.ReviewsCount))            
             .ToListAsync(cancellationToken);
     }
 
@@ -78,7 +79,7 @@ public sealed class DBRepository : IDBRepository
                 .ThenInclude(run => run.Location)
             .OrderBy(listing => listing.ScrapeRun.Location.County)
             .ThenBy(listing => listing.ScrapeRun.Location.Name)
-            .ThenBy(listing => listing.Name)
+            .ThenBy(listing => listing.Name)            
             .ToListAsync(cancellationToken);
 
         var result = new List<InsightListing>();
@@ -189,6 +190,10 @@ public sealed class DBRepository : IDBRepository
         // Add solicitor listings
         foreach (var listing in listingArray)
         {
+            if (scrapeRun.Listings.Any(l => l.Name == listing.Name))
+            {
+                continue;
+            }
             scrapeRun.Listings.Add(new SolicitorListing
             {
                 Name = listing.Name,

@@ -383,7 +383,7 @@ tbody tr:not(:has(.empty-state)):hover {
 .solicitor-card {
     border: 1px solid #3b414a;
     border-radius: 8px;
-    background: #1b1f24;
+    background: #373d45;
     box-shadow: 0 8px 18px #0000004d;
     padding: 14px;
 }
@@ -405,7 +405,7 @@ tbody tr:not(:has(.empty-state)):hover {
 
 .solicitor-card header p {
     margin: 0;
-    color: #e0de70;
+    color: #edb684;
     font-weight: 700;
     font-size: 0.84rem;
 }
@@ -434,10 +434,10 @@ tbody tr:not(:has(.empty-state)):hover {
     overflow-wrap: anywhere;
 }
 
-.solicitor-card a {
-    color: #69dfdd;
-    text-underline-offset: 3px;
-}
+    .solicitor-card a {
+        color: #2292d9;
+        text-underline-offset: 3px;
+    }
 
 @keyframes status-pulse {
     50% {
@@ -604,8 +604,8 @@ tbody tr:not(:has(.empty-state)):hover {
     padding: 3px 8px;
     display: inline-block;
     border-radius: 4px;
-    background: #1e2d3a;
-    color: #5ec8e8;
+    background: #333a1e;
+    color: #f6f2ff;
     font-size: 0.76rem;
     font-weight: 700;
     letter-spacing: 0.02em;
