@@ -5,10 +5,10 @@ The App scrapes solicitor data from public sources, stores it in an in-memory da
 Primarliy **solicitors.com** site is used for this exercise.
 
 ## Disclaimer
-This project is for educational purposes only. It is not intended for production use or commercial deployment.
-Also please note that scraping websites may violate their terms of service. Always check the website's `robots.txt` and terms before scraping.
-since solicitors.com robots.txt has no restrictions, it is safe to scrape.
-**LawSociety.org.uk** has restrictions in place(throws **403 forbidden** http error on any attempt), so scraping wasn't **possible** for this site.
+This is development-focused setup. It is not intended for production use or commercial deployment.
+Also please note that scraping websites may violate their terms of service. Always check the website's **`robots.txt`** and terms before scraping.
+since **solicitors.com** has no restrictions, it was used for scraping in this exercise.
+**LawSociety.org.uk** has restrictions in place(throws **403 forbidden** http error on any attempt), so scraping was **attempted** but wasn't possible.
 
 ## How to Run
 
