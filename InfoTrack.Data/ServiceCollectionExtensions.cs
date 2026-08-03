@@ -1,7 +1,7 @@
 using InfoTrack.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-
+using InfoTrack.Domain.Contract;
 namespace InfoTrack.Data;
 
 public static class ServiceCollectionExtensions
@@ -14,7 +14,7 @@ public static class ServiceCollectionExtensions
             options.UseInMemoryDatabase(databaseName)
         );
 
-        services.AddScoped<IDBRepository, DBRepository>();
+        services.AddScoped<ISolicitorsRepository, SolicitorsRepository>();
         return services;
     }
 }

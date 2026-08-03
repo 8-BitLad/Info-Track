@@ -1,24 +1,15 @@
 using InfoTrack.Data.Entities;
 using InfoTrack.Domain;
+using InfoTrack.Domain.Contract;
 using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
 
 namespace InfoTrack.Data.Repositories;
 
-public interface IDBRepository
-{
-    public Task<IReadOnlyList<DiscoveredLocation>> GetAllAsync(CancellationToken cancellationToken = default);
-    public Task<IReadOnlyList<SolicitorCard>> GetLatestListingsByLocationUrlAsync(string locationUrl, CancellationToken cancellationToken = default);
-    public Task<IReadOnlyList<InsightListing>> GetAllListingsWithLocationAsync(CancellationToken cancellationToken = default);
-    public Task UpsertAsync(IEnumerable<DiscoveredLocation> locations, CancellationToken cancellationToken = default);
-    public Task SaveListingsAsync(string locationUrl, IEnumerable<SolicitorCard> listings, CancellationToken cancellationToken = default);
-}
-
-public sealed class DBRepository : IDBRepository
+public sealed class SolicitorsRepository : ISolicitorsRepository
 {
     private readonly InfoTrackDbContext _dbContext;
 
-    public DBRepository(InfoTrackDbContext dbContext)
+    public SolicitorsRepository(InfoTrackDbContext dbContext)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }

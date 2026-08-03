@@ -1,6 +1,6 @@
 ﻿using InfoTrack.Application.Services;
-using InfoTrack.Data.Repositories;
 using InfoTrack.Domain;
+using InfoTrack.Domain.Contract;
 
 
 namespace InfoTrack.Application.Queries
@@ -11,7 +11,7 @@ namespace InfoTrack.Application.Queries
         Task<IReadOnlyList<InsightListing>> GetInsightListingsAsync(CancellationToken cancellationToken = default, string postCode = "");
     }
 
-    public sealed class LocationQueryService(IDBRepository repository, IListingFilterByPostCodeService listingFilterByPostCodeService) : ILocationQueryService
+    public sealed class LocationQueryService(ISolicitorsRepository repository, IListingFilterByPostCodeService listingFilterByPostCodeService) : ILocationQueryService
     {
         public async Task<SolicitorListingsResponse> GetSolicitorListingsAsync(string locationUrl, bool refresh = false, CancellationToken cancellationToken = default)
             => new SolicitorListingsResponse(locationUrl, "database", await repository.GetLatestListingsByLocationUrlAsync(locationUrl, cancellationToken));

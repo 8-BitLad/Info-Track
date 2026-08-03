@@ -2,7 +2,8 @@
 
 A .NET Aspire + React application for solicitor listing data scraping and reporting across multiple UK locations.
 The App scrapes solicitor data from public sources, stores it in an in-memory database, and provides a React dashboard for visualization and reporting.
-Primarliy **solicitors.com** site is used for this exercise.
+Primarliy **solicitors.com** site is used for this exercise. 
+The project is architected using **Clean Architecture** using **CQRS**, **Dependency Inversion** and **SOLID** principles.
 
 ## Disclaimer
 This is development-focused setup. It is not intended for production use or commercial deployment.

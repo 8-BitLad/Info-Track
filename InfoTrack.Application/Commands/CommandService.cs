@@ -1,5 +1,5 @@
-﻿using InfoTrack.Data.Repositories;
-using InfoTrack.Domain;
+﻿using InfoTrack.Domain;
+using InfoTrack.Domain.Contract;
 using InfoTrack.Scraper;
 
 public interface ICommandService
@@ -7,7 +7,7 @@ public interface ICommandService
     Task<IReadOnlyList<SolicitorCard>> ScrapeAndPersistListingsAsync(string locationUrl, CancellationToken cancellationToken = default);
 }
 
-public sealed class CommandService(IDBRepository repository,
+public sealed class CommandService(ISolicitorsRepository repository,
    ISolicitorListingScraper solicitorListingScraper) : ICommandService
 {
     public async Task<IReadOnlyList<SolicitorCard>> ScrapeAndPersistListingsAsync(string locationUrl, CancellationToken cancellationToken = default)
