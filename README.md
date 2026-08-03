@@ -1,6 +1,14 @@
 # InfoTrack: Solicitor Data Scraper & Dashboard
 
 A .NET Aspire + React application for solicitor listing data scraping and reporting across multiple UK locations.
+The App scrapes solicitor data from public sources, stores it in an in-memory database, and provides a React dashboard for visualization and reporting.
+Primarliy **solicitors.com** site is used for this exercise.
+
+## Disclaimer
+This project is for educational purposes only. It is not intended for production use or commercial deployment.
+Also please note that scraping websites may violate their terms of service. Always check the website's `robots.txt` and terms before scraping.
+since solicitors.com robots.txt has no restrictions, it is safe to scrape.
+**LawSociety.org.uk** has restrictions in place(throws **403 forbidden** http error on any attempt), so scraping wasn't **possible** for this site.
 
 ## How to Run
 
